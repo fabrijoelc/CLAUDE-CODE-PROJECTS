@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tetris</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="wrapper">
+    <h1 class="game-title">TETRIS</h1>
+    <div class="game-container">
+      <canvas id="board" width="300" height="600"></canvas>
+
+      <aside class="panel">
+        <!-- Score / Lines / Level -->
+        <div class="panel-section">
+          <span class="label">SCORE</span>
+          <span class="value" id="score">0</span>
+        </div>
+        <div class="panel-section">
+          <span class="label">LINES</span>
+          <span class="value" id="lines">0</span>
+        </div>
+        <div class="panel-section">
+          <span class="label">LEVEL</span>
+          <span class="value" id="level">1</span>
+        </div>
+
+        <!-- Energía -->
+        <div class="panel-section">
+          <span class="label">ENERGÍA</span>
+          <div class="energy-track">
+            <div id="energy-fill" class="energy-fill"></div>
+          </div>
+          <span class="label" id="energy-label">0%</span>
+        </div>
+
+        <!-- Hold -->
+        <div class="panel-section">
+          <span class="label">HOLD (C)</span>
+          <canvas id="hold-canvas" width="96" height="72"></canvas>
+        </div>
+
+        <!-- Next (5 piezas) -->
+        <div class="panel-section">
+          <span class="label">NEXT</span>
+          <canvas id="next-canvas" width="96" height="72"></canvas>
+        </div>
+
+        <!-- Modo desafío info -->
+        <div class="panel-section">
+          <span class="label" id="challenge-info"></span>
+        </div>
+
+        <div class="panel-section">
+          <span class="label">TEMA</span>
+          <label class="theme-toggle-label" id="theme-toggle-label">
+            <input type="checkbox" id="theme-toggle" />
+            <span class="toggle-track">
+              <span class="toggle-thumb"></span>
+            </span>
+            <span class="toggle-text">Claro</span>
+          </label>
+        </div>
+
+        <!-- Selector de skin / tema visual -->
+        <div class="panel-section">
+          <span class="label">SKIN</span>
+          <select id="skin-select" class="skin-select">
+            <option value="retro">Retro</option>
+            <option value="neon">Neon</option>
+            <option value="pastel">Pastel</option>
+            <option value="pixel">Pixel art</option>
+          </select>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Overlay genérico (pause / game over / win) -->
+    <div id="overlay" class="overlay hidden">
+      <div class="overlay-box">
+        <p id="overlay-title">GAME OVER</p>
+        <p id="overlay-score"></p>
+        <div id="overlay-records" class="records-zone"></div>
+        <button id="restart-btn">Reiniciar</button>
+      </div>
+    </div>
+
+    <!-- Menú de selección de modo -->
+    <div id="mode-menu" class="overlay hidden">
+      <div class="overlay-box mode-box">
+        <p class="overlay-title-alt">SELECCIONA MODO</p>
+        <div class="mode-grid">
+          <button class="mode-btn" data-mode="classic">🎮 Clásico</button>
+          <button class="mode-btn" data-mode="sprint">⏱ Sprint 40L</button>
+          <button class="mode-btn" data-mode="garbage">🗑 Basura</button>
+          <button class="mode-btn" data-mode="prefilled">🧱 Pre-colocado</button>
+          <button class="mode-btn" data-mode="invisible">👻 Invisible</button>
+          <button class="mode-btn" data-mode="invrot">🔄 Rot. Inversa</button>
+        </div>
+        <div id="records-list" class="records-zone"></div>
+      </div>
+    </div>
+
+    <!-- Menú de pausa -->
+    <div id="pause-menu" class="overlay hidden">
+      <div class="overlay-box pause-box">
+        <p class="overlay-title-alt">PAUSA</p>
+        <div class="pause-actions">
+          <button id="pause-resume" class="mode-btn">▶ Reanudar</button>
+          <button id="pause-restart" class="mode-btn">🔄 Reiniciar</button>
+          <button id="pause-controls-btn" class="mode-btn">⌨ Ver controles</button>
+        </div>
+
+        <div id="pause-controls-panel" class="pause-controls hidden">
+          <ul>
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↑</kbd><kbd>X</kbd> rot. CW</li>
+            <li><kbd>Z</kbd> rot. CCW</li>
+            <li><kbd>↓</kbd> bajar</li>
+            <li><kbd>Space</kbd> caída</li>
+            <li><kbd>C</kbd> hold</li>
+            <li><kbd>Q</kbd> habilidad</li>
+            <li><kbd>M</kbd> mute</li>
+            <li><kbd>P</kbd> pausa</li>
+          </ul>
+        </div>
+
+        <div class="pause-level">
+          <label for="pause-level-select">Nivel inicial</label>
+          <select id="pause-level-select"></select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menú de habilidades -->
+    <div id="ability-menu" class="overlay hidden">
+      <div class="overlay-box ability-box">
+        <p class="overlay-title-alt">⚡ ELIGE HABILIDAD</p>
+        <div class="ability-grid">
+          <button class="ability-btn" data-ability="next5">👁 Ver próximas 5</button>
+          <button class="ability-btn" data-ability="swap">🔀 Cambiar pieza</button>
+          <button class="ability-btn" data-ability="slowmo">🐢 Slow-mo 10s</button>
+          <button class="ability-btn" data-ability="undo">↩ Deshacer lock</button>
+          <button class="ability-btn" data-ability="freehold">📦 Hold gratis</button>
+        </div>
+        <button id="ability-cancel" class="cancel-btn">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orden de carga: constantes → helpers → game -->
+  <script src="pieces.js"></script>
+  <script src="audio.js"></script>
+  <script src="effects.js"></script>
+  <script src="powerups.js"></script>
+  <script src="combos.js"></script>
+  <script src="hold.js"></script>
+  <script src="abilities.js"></script>
+  <script src="challenges.js"></script>
+  <script src="pausemenu.js"></script>
+  <script src="records.js"></script>
+  <script src="skins.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
